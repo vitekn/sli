@@ -5,6 +5,7 @@
 #include "ReadUtil.h"
 
 #include <istream>
+#include <ostream>
 
 struct PointUtil
 {
@@ -17,8 +18,8 @@ struct PointUtil
 
     static std::istream& setPointBinFormat(std::istream& is);
 
-
 };
+
 inline
 std::istream& PointUtil::setPointFormat(std::istream& is, int format)
 {
@@ -39,6 +40,8 @@ std::istream& PointUtil::setPointBinFormat(std::istream& is)
 };
 
 std::istream& operator>>(std::istream& is, Point& p);
+
+std::ostream& operator<<(std::ostream& os, const Point& p);
 
 #endif
 

@@ -1,4 +1,61 @@
 #include "TriangleUtil.h"
+#include <algorithm>
+#include <iostream>
+
+Point TriangleUtil::calcNormale(const Triangle& t)
+{
+    Point u = t.points[1] - t.points[0];
+    Point v = t.points[2] - t.points[0];
+ 
+    return { (u.y * v.z) - (u.z*v.y),
+              (u.z * v.x) - (u.x * v.z),
+              (u.x * v.y) - (u.y * v.x) };
+}
+
+std::tuple<bool, Segment> TriangleUtil::intersectZ(const Triangle& t, uint64_t z)
+{
+    bool res;
+    Segment s;
+    int sc = 0;
+    for (int i = 0; i < 3; ++i) {
+        const Point& p1 = t.points[i];
+        const Point& p2 = t.points[(i+1)%3];
+        const Point* ppa;
+        const Point* ppb;
+        if (p1.z > p2.z) {
+            ppa = &p1;
+            ppb = &p2;
+        } else {
+            ppb = &p1;
+            ppa = &p2;
+        }
+        
+        if (ppa->z >= z && ppb->z <= z) {
+            Point d = *ppa - *ppb;
+            //std::cout << "diff " << d <<std::endl;
+            int64_t dz = z - ppb->z; 
+            if (dz) {
+                int64_t x = ppb->x + (d.x*dz)/d.z;
+                int64_t y = ppb->y + (d.y*dz)/d.z;
+                if (sc < 2) {
+                    s.points[sc].x = x;
+                    s.points[sc].y = y;
+                }
+                ++sc;
+            }
+        }
+    }
+    
+    res = (sc == 2);
+    if (res) {
+        s.k = ((double)t.normal.y) / (double)t.normal.x;
+        
+        s.sign = t.normal.x != 0 ?  t.normal.x/std::abs(t.normal.x) : 0;
+    }
+    
+    return std::tie(res, s);
+}
+
 
 std::istream& operator>>(std::istream& is, Triangle& p){
     if (is.iword(PointUtil::getPointFormatIdx()) == 0) {
