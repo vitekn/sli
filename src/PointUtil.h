@@ -6,6 +6,7 @@
 
 #include <istream>
 #include <ostream>
+#include <tuple>
 
 struct PointUtil
 {
@@ -17,6 +18,8 @@ struct PointUtil
     static std::istream& setPointTextFormat(std::istream& is);
 
     static std::istream& setPointBinFormat(std::istream& is);
+    
+    static std::tuple<const Point*, const Point*> orderByZ(const Point& p1, const Point& p2);
 
 };
 
@@ -38,10 +41,23 @@ std::istream& PointUtil::setPointBinFormat(std::istream& is)
 {
     return setPointFormat(is, 1);
 };
+inline
+std::tuple<const Point*, const Point*> PointUtil::orderByZ(const Point& p1, const Point& p2)
+{
+        if (p1.z > p2.z) {
+            return std::tuple<const Point*, const Point*>(&p2, &p1);
+        } else {
+            return std::tuple<const Point*, const Point*>(&p1, &p2);
+        }
+
+}
+
 
 std::istream& operator>>(std::istream& is, Point& p);
 
 std::ostream& operator<<(std::ostream& os, const Point& p);
+
+
 
 #endif
 

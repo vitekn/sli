@@ -13,7 +13,7 @@ struct Segment
 };
 
 inline 
-std::ostream& operator<<(std::ostream& os, const Segment s)
+std::ostream& operator<<(std::ostream& os, const Segment& s)
 {
     os << "[(" << s.points[0].x << ", " << s.points[0].y
        << ") -> (" << s.points[1].x << ", " << s.points[1].y

@@ -1,9 +1,12 @@
 #ifndef POINT_H
 #define POINT_H
+
+#include <limits>
 #include <stdint.h>
 
 struct Point{
-     
+    constexpr static const int64_t NO_VALUE = std::numeric_limits<int64_t>::min();
+    
     int64_t x;
     int64_t y;
     int64_t z;

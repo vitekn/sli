@@ -12,38 +12,61 @@ Point TriangleUtil::calcNormale(const Triangle& t)
               (u.x * v.y) - (u.y * v.x) };
 }
 
+std::tuple<bool, Point2> intersectSecionZ(const Point& pb, const Point& pa, int z)
+{
+    
+    if (pa.z >= z && pb.z <= z) {
+        Point d = pa - pb;
+        //std::cout << "diff " << d <<std::endl;
+        int64_t dz = z - pb.z; 
+        if (dz) {
+            int64_t x = pb.x + (d.x*dz)/d.z;
+            int64_t y = pb.y + (d.y*dz)/d.z;
+            return std::tuple<bool, Point2>(true, {x, y});
+        }
+    }
+    
+    return std::tuple<bool, Point2>(false, {0, 0});
+    
+}
+
 std::tuple<bool, Segment> TriangleUtil::intersectZ(const Triangle& t, uint64_t z)
 {
     bool res;
     Segment s;
     int sc = 0;
+        
+    if (t.points[0].z == z && t.points[1].z == z && t.points[2].z == z) {
+        return std::tuple<bool, Segment>(false, s);
+    }
+    
     for (int i = 0; i < 3; ++i) {
         const Point& p1 = t.points[i];
         const Point& p2 = t.points[(i+1)%3];
+        
+        if (p1.z == p2.z && p2.z == z) {
+            s.points[0] = {p1.x, p1.y};
+            s.points[1] = {p2.x, p2.y};
+            sc = 2;
+            break;
+        }
         const Point* ppa;
         const Point* ppb;
-        if (p1.z > p2.z) {
-            ppa = &p1;
-            ppb = &p2;
-        } else {
-            ppb = &p1;
-            ppa = &p2;
-        }
-        
-        if (ppa->z >= z && ppb->z <= z) {
-            Point d = *ppa - *ppb;
-            //std::cout << "diff " << d <<std::endl;
-            int64_t dz = z - ppb->z; 
-            if (dz) {
-                int64_t x = ppb->x + (d.x*dz)/d.z;
-                int64_t y = ppb->y + (d.y*dz)/d.z;
-                if (sc < 2) {
-                    s.points[sc].x = x;
-                    s.points[sc].y = y;
-                }
+        std::tie(ppb, ppa) = PointUtil::orderByZ(p1, p2);
+        auto r = intersectSecionZ(*ppb, *ppa, z);
+        if (std::get<0>(r)) {
+            if (sc == 0) {
+                s.points[0] = std::get<1>(r);
                 ++sc;
+            } else {
+                if (s.points[0] != std::get<1>(r)) {
+                    s.points[1] = std::get<1>(r);
+                    ++sc;
+                    break;
+                }
             }
         }
+        
     }
     
     res = (sc == 2);
@@ -53,7 +76,7 @@ std::tuple<bool, Segment> TriangleUtil::intersectZ(const Triangle& t, uint64_t z
         s.sign = t.normal.x != 0 ?  t.normal.x/std::abs(t.normal.x) : 0;
     }
     
-    return std::tie(res, s);
+    return std::tuple<bool, Segment>(res, s);
 }
 
 

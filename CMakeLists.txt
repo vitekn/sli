@@ -9,6 +9,7 @@ project(sli)
 
 file(GLOB SLI_SRC
     "src/*.cpp"
+    "src/thirdPart/*.cpp"
 )
 
 add_executable(sli ${SLI_SRC})

@@ -13,10 +13,16 @@ std::vector<std::vector<Segment> > SegmentUtil::sort(const std::vector<Segment>&
     typedef std::unordered_multimap<Point2, const Segment*> SMap;
     typedef std::unordered_set<const Segment*> SSet;
 
+    if (segs.size() < 3){
+        return std::vector<std::vector<Segment> >(1, segs);
+    }
+    
     SMap map;
     for (const auto& s : segs) {
-        map.insert({s.points[0], &s});
-        map.insert({s.points[1], &s});
+        if(s.points[0] != s.points[1]) {
+            map.insert({s.points[0], &s});
+            map.insert({s.points[1], &s});
+        }
     }
     
     std::vector<std::vector<Segment> > res;
@@ -32,17 +38,14 @@ std::vector<std::vector<Segment> > SegmentUtil::sort(const std::vector<Segment>&
     while (!map.empty()) {
         auto itp = map.equal_range(fpp);
         size_t n = std::distance(itp.first, itp.second);
-    
+
         assert (n == 2);
-        const Segment* sp;
+
         auto it1 = itp.first;
         auto it2 = itp.first;
         ++it2;
-        if (it1->second == fp) {
-            sp = it2->second;
-        } else {
-            sp = it1->second;
-        }
+
+        const Segment* sp = (it1->second == fp) ? sp = it2->second : sp = it1->second;
         
         map.erase(fpp);
         fp = sp;
@@ -57,8 +60,10 @@ std::vector<std::vector<Segment> > SegmentUtil::sort(const std::vector<Segment>&
             cs->push_back(sa);
             
         } else {
-            res.push_back(std::vector<Segment>());
-            cs = &res.back();
+            if (!map.empty()) {
+                res.push_back(std::vector<Segment>());
+                cs = &res.back();
+            }
         }
     }
     return res;
@@ -82,12 +87,15 @@ bool SegmentUtil::join2(Segment& s1, const Segment& s2)
 
 void SegmentUtil::join(std::vector<Segment>& segs)
 {
+    if (segs.size() < 2) {
+        return;
+    }
     auto it = segs.begin();
     auto nit = it;
     ++nit;
 
     while (nit != segs.end()) {
-        while (join2(*it,*nit)) {
+        while (nit != segs.end() && join2(*it,*nit)) {
             ++nit;
         }
         if (nit == segs.end()) {
