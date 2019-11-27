@@ -20,6 +20,7 @@ struct PointUtil
     static std::istream& setPointBinFormat(std::istream& is);
     
     static std::tuple<const Point*, const Point*> orderByZ(const Point& p1, const Point& p2);
+    
 
 };
 

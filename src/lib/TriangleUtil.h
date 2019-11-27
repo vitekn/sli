@@ -17,5 +17,6 @@ struct TriangleUtil
 };
 
 std::istream& operator>>(std::istream& is, Triangle& p);
+std::ostream& operator<<(std::ostream& is, const Triangle& p);
 
 #endif

@@ -7,6 +7,7 @@
 struct Segment
 {
     Point2 points[2];
+    Point2 normale;
     double k;
     int    sign;
 

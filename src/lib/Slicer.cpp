@@ -20,7 +20,7 @@ Slices Slicer::slice(const Mesh& m, int zStep)
     return res;
 }
 
-Paths Slicer::sliceAt(const Mesh& m, int z)
+Polygons Slicer::sliceAt(const Mesh& m, int z)
 {
     std::vector<Segment> vs;
     for (const auto& t : m) {
@@ -30,15 +30,10 @@ Paths Slicer::sliceAt(const Mesh& m, int z)
             vs.emplace_back(std::get<1>(r));
         }
     }
-    auto ss = SegmentUtil::sort(vs);
+    Polygons res = SegmentUtil::sort(vs);
 
-    Paths res;
-    for (auto& v : ss) {
+    for (auto& v : res) {
         SegmentUtil::join(v);
-        res.push_back(ClipperLib::Path());
-        SegmentUtil::asPath(v, [&](const Point2& p) {
-            res.back().emplace_back(p.x, p.y);
-        });
     }
 
     return res;

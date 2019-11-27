@@ -74,6 +74,7 @@ std::tuple<bool, Segment> TriangleUtil::intersectZ(const Triangle& t, uint64_t z
         s.k = ((double)t.normal.y) / (double)t.normal.x;
         
         s.sign = t.normal.x != 0 ?  t.normal.x/std::abs(t.normal.x) : 0;
+        s.normale = Point2Util::normalize({t.normal.x, t.normal.y}) ;
     }
     
     return std::tuple<bool, Segment>(res, s);
@@ -125,5 +126,12 @@ std::istream& operator>>(std::istream& is, Triangle& p){
     }
     
     return is;
+}
+
+std::ostream& operator<<(std::ostream& os, const Triangle& p)
+{
+    os << "N= " << p.normal <<"[(" << p.points[0] << "), (" << p.points[1] << "), (" << p.points[2] << ")]"; 
+    return os;
+    
 }
 

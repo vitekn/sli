@@ -7,11 +7,27 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 project(sli)
 
-file(GLOB SLI_SRC
-    "src/*.cpp"
-    "src/thirdPart/*.cpp"
+file(GLOB LIB_SRC
+    "src/lib/*.cpp"
 )
 
-add_executable(sli ${SLI_SRC})
+add_library(${PROJECT_NAME}_lib STATIC ${LIB_SRC})
 
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+include_directories(src/tests)
+
+target_link_libraries(${PROJECT_NAME}
+                      ${PROJECT_NAME}_lib)
+
+
+link_directories(src/tests/lib)
+enable_testing()
+
+add_executable(SegmentUtil_test src/tests/SegmentUtil_test.cpp)
+target_link_libraries(SegmentUtil_test ${PROJECT_SOURCE_DIR}/src/tests/lib/libgtest.a ${PROJECT_SOURCE_DIR}/src/tests/lib/libgtest_main.a ${PROJECT_NAME}_lib pthread)
+add_test(NAME SegmentUtil
+         COMMAND SegmentUtil_test)
+    
+    
 install(TARGETS sli RUNTIME DESTINATION bin)

@@ -6,7 +6,7 @@
 struct Slicer 
 {
     static Slices slice(const Mesh& m, int zStep);
-    static Paths  sliceAt(const Mesh& m, int z);
+    static Polygons  sliceAt(const Mesh& m, int z);
 };
 
 #endif

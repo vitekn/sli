@@ -10,7 +10,7 @@ public:
     virtual void print(std::ostream& os) = 0;
 
 
-    static void printIntAsF(std::ostream & os, int64_t v)
+    static void printIntAsF(std::ostream& os, int64_t v)
     {
         os << v/1000;
         int dec = v%1000;
@@ -30,9 +30,6 @@ public:
     }
 };
 
-
-
-
 class ExtrudeCommand : public MachineCommand
 {
 public:
@@ -42,7 +39,7 @@ public:
     ,_eNum(eNum)
     {}
     
-    void print(std::ostream & os) override
+    void print(std::ostream& os) override
     {
         os << 'E';
         MachineCommand::printIntAsF(os, _l);
@@ -58,7 +55,7 @@ class MoveCommand : public MachineCommand
 public:
     MoveCommand (const Point& p, int mt = 0): _p(p), _mt(mt){}
     
-    void print(std::ostream & os) override
+    void print(std::ostream& os) override
     {
         _c = 0;
         os << 'G' << _mt << ' ';
@@ -69,7 +66,7 @@ public:
     
 private:
     
-    void print(std::ostream & os, int64_t v, char d)
+    void print(std::ostream& os, int64_t v, char d)
     {
         if (v != Point::NO_VALUE) {
             if (_c) {
