@@ -29,10 +29,11 @@ struct SegmentUtil
     };
     
     static int getPointPosition(const Point2& subj, const Segment& section);
-    static int64_t getYOnLine(uint64_t x, const Segment& seg);
+    static int64_t getYOnLine(int64_t x, const Segment& seg);
     
-    static Segment moveSegmentOnNorm(const Segment& seg, int64_t offset);
+//    static Segment moveSegmentOnNorm(const Segment& seg, int64_t offset);
     static void midOffset(Segment& seg1, Segment& seg2, int64_t offset);
+    
     
   //  double getK(const Segment& s);
 //    bool hasPoint(const Segment& s, const Point2& p);

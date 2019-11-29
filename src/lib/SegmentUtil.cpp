@@ -166,13 +166,17 @@ std::tuple<bool, Point2> SegmentUtil::haveIntersection(const Segment& s1, const 
     return std::tuple<bool, Point2>(false,{});
     
 }
-int64_t SegmentUtil::getYOnLine(uint64_t x, const Segment& seg)
+
+int64_t SegmentUtil::getYOnLine(int64_t x, const Segment& seg)
 {
     int64_t dx = seg.points[0].x - seg.points[1].x;
     int64_t dy = seg.points[0].y - seg.points[1].y;
     int64_t dsx = seg.points[0].x - x;
     volatile int64_t m = dsx*dy;
     return seg.points[0].y - m/dx;
+    
+    
+    
 }
 
 
@@ -195,14 +199,14 @@ int SegmentUtil::getPointPosition(const Point2& subj, const Segment& section)
         return PointPosition::ONLINE;
     }
     
-    if (std::copysign(1,section.k) * section.sign * nyd < 0) {
+    if ((((int64_t)std::copysign(1,section.k)) ^ section.sign ^ nyd) & 0x8000000000000000) {
         return PointPosition::INSIDE;
     } 
     return PointPosition::OUTSIDE;
 
 }
 
-Segment SegmentUtil::moveSegmentOnNorm(const Segment& seg, int64_t offset)
+/*Segment SegmentUtil::moveSegmentOnNorm(const Segment& seg, int64_t offset)
 {
     int64_t dx = offset * seg.normale.x;
     int64_t dy = offset * seg.normale.y;
@@ -214,7 +218,7 @@ Segment SegmentUtil::moveSegmentOnNorm(const Segment& seg, int64_t offset)
     res.points[1].y = seg.points[1].y + dy;
     return res;
     
-}
+}*/
 
 void SegmentUtil::midOffset(Segment& seg1, Segment& seg2, int64_t offset)
 {
@@ -222,7 +226,8 @@ void SegmentUtil::midOffset(Segment& seg1, Segment& seg2, int64_t offset)
     Point2 md = { seg1.normale.x + seg2.normale.x, seg1.normale.y + seg2.normale.y };
     
     md = Point2Util::normalize(md);
-    Point2 md2{-seg1.normale.y, seg1.normale.x};
+    //Point2 md2{-seg1.normale.y, seg1.normale.x};
+    const Point2& md2 = seg1.normale;
     int64_t cp = md.x * md2.x + md.y * md2.y; // /1 000 000
     
     md = (md * (offset * 1000000)) / cp;
