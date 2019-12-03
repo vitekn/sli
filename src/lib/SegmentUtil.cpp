@@ -230,7 +230,8 @@ void SegmentUtil::midOffset(Segment& seg1, Segment& seg2, int64_t offset)
     const Point2& md2 = seg1.normale;
     int64_t cp = md.x * md2.x + md.y * md2.y; // /1 000 000
     
-    md = (md * (offset * 1000000)) / cp;
+    md *= (offset * 1000);
+    md /= cp;
     
     assert (seg1.points[1] == seg2.points[0]);
     seg1.points[1] += md;

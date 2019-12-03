@@ -14,8 +14,8 @@ struct Point2
     bool operator==(const Point2& o) const;
     bool operator!=(const Point2& o) const;
 
-    Point2& operator*(int64_t o);
-    Point2& operator/(int64_t o);
+    Point2& operator*=(int64_t o);
+    Point2& operator/=(int64_t o);
     Point2& operator+=(const Point2& o);
 };
 
@@ -32,7 +32,7 @@ bool Point2::operator==(const Point2& o) const
 }
 
 inline
-Point2& Point2::operator*(int64_t o)
+Point2& Point2::operator*=(int64_t o)
 {
     x *= o;
     y *= o;
@@ -40,7 +40,7 @@ Point2& Point2::operator*(int64_t o)
 }
 
 inline
-Point2& Point2::operator/(int64_t o)
+Point2& Point2::operator/=(int64_t o)
 {
     x /= o;
     y /= o;
@@ -55,7 +55,7 @@ Point2& Point2::operator+=(const Point2& o)
     return *this;
 }
 
-inline 
+constexpr inline 
 Point2 operator-(const Point2 p1, const Point2 p2)
 {
      return {p1.x - p2.x, p1.y - p2.y};
@@ -103,6 +103,24 @@ std::ostream& operator<<(std::ostream& os, const Point2& p)
 {
     os << '(' << p.x << ", " << p.y << ')';
     return os;
+}
+
+constexpr inline 
+Point2 operator+(const Point2& p1, const Point2& p2)
+{
+    return {p1.x + p2.x, p1.y + p2.y};
+}
+
+constexpr inline
+Point2 operator/(const Point2& p, int64_t o)
+{
+    return {p.x / o, p.y / o};
+}
+
+constexpr inline
+Point2 operator*(const Point2& p, int64_t o)
+{
+    return {p.x * o, p.y * o};
 }
 
 
