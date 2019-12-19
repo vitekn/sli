@@ -6,7 +6,7 @@
 
 struct PolygonUtil {
     
-    static Polygon offset(const Polygon& p, int64_t offset);
+    static Polygons offset(const Polygon& p, int64_t offset);
 
     struct Intersection {
         Segment s;

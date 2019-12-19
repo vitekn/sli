@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <unordered_map>
 #include <assert.h>
-
-Polygon PolygonUtil::offset(const Polygon& p, int64_t offset)
+// construct insert segs by dividing by intersections, map pt->segs, some segs -> poly, some -> discard
+Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
 {
     if (p.size() < 3) {
-        return p;
+        return Polygons (1, p);
     }
     
     Polygon tmp = p;
@@ -17,47 +17,111 @@ Polygon PolygonUtil::offset(const Polygon& p, int64_t offset)
         SegmentUtil::midOffset(*it, *nit, offset);
     }
     SegmentUtil::midOffset(tmp.back(), tmp.front(), offset);
-    
-    Polygon res;
-    res.reserve(p.size());
 
-    
-    while (!tmp.empty()) {
-        Polygon tmp2;
-        Intersector ior(&tmp);
-        for (it = tmp.begin(); it != tmp.end(); ++it) {
-            auto segs = ior.getSortedIntersections(*it);
-            if (segs.empty()) {
-                res.emplace_back(*it);
-                it->normale = {0, 0};
-            } else {
-                
-                int pp = SegmentUtil::getPointPosition(it->points[0], segs.front().s);
-                Point2 *sp = &(it->points[0]);
-                bool cut = false;
-                switch(pp) {
-                    case SegmentUtil::PointPosition::INSIDE:
-                        //keep
-                        cut = false;
-                    break;
-                    case SegmentUtil::PointPosition::OUTSIDE:
-                        //cut
-                        cut = true;
-                    break;
-                    case SegmentUtil::PointPosition::ONLINE:
-                        cut = SegmentUtil::getPointPosition(it->points[1], segs.front().s) == SegmentUtil::PointPosition::OUTSIDE;
-                    break;
-                }
+    Polygons res;
 
-                for (int i = 0; i < segs.size(); i+=2){
-                    tmp2.emplace_back(*it);
-                    tmp2.back().points[0] = *sp;
-                    tmp2.back().points[1] = segs[i].ip;
+    std::unordered_multimap<Point2, Segment> segments;
+    
+    Intersector ior(&tmp);
+    for (Segment& s : tmp) {
+        
+        auto segs = ior.getSortedIntersections(s);
+        assert (segs.size() > 1);
+        
+        Point2 fp = segs.front().ip;
+        
+        auto it = segs.begin();
+        ++it;
+        for (; it != segs.end(); ++it) { //add check for dups, if any delete both
+            segments.insert({fp,     {{it->ip, fp}, {s.normale}, s.k, s.sign}});
+            segments.insert({it->ip, {{fp, it->ip}, {s.normale}, s.k, s.sign}});
+            fp = it->ip;
+        }
+    }
+    
+    while (!segments.empty()) {
+        auto mit = segments.begin();
+        Point2 curr = mit->first;
+        Point2 nextKey = mit->second.points[0];
+        auto range = segments.equal_range(nextKey);
+        res.emplace_back();
+        bool discard = false;
+        
+        while (range.first != range.second) {
+            
+            auto ssegit = range.first;
+            
+            for (; ssegit != range.second; ++ssegit) {
+                if (ssegit->second.points[0] == curr) {
+                    break;
                 }
             }
+            res.back().emplace_back(ssegit->second);
+            curr = nextKey;
+            
+            
+            if (std::distance(range.first, range.second) > 2) {
+                
+                std::unordered_multimap<Point2, Segment>::iterator minAit;
+                std::unordered_multimap<Point2, Segment>::iterator maxAit;
+                int64_t maxA = std::numeric_limits<int64_t>::min();
+                int64_t minA = std::numeric_limits<int64_t>::max();
+                
+                for (auto oit = range.first; oit != range.second; ++oit) {
+                    if (oit == ssegit) {
+                        continue;
+                    }
+                    Segment tmps = oit->second;
+                    std::swap(tmps.points[0], tmps.points[1]);
+                    int64_t angle = SegmentUtil::getAngle(ssegit->second, tmps);
+                    if ( angle >= maxA ) {
+                        maxA = angle;
+                        maxAit = oit;
+                    }
+                    if ( angle <= minA ) {
+                        minA = angle;
+                        minAit = oit;
+                    }
+                }
+                
+                //try maxA -> if internal region - take it
+                
+                if (SegmentUtil::validCorner(ssegit->second, maxAit->second, maxA)) {
+                    //match
+                        nextKey = maxAit->second.points[0];
+                        segments.erase(maxAit);
+                } else {
+                    if (SegmentUtil::validCorner(ssegit->second, minAit->second, minA)) {
+                        // match - discard
+                        discard = true;
+                        nextKey = minAit->second.points[0];
+                        segments.erase(minAit);
+                    }
+                    else {
+                        assert(false && "smth worng");
+                    }
+                        
+                }
+                
+            }
+            else {
+
+                auto oit = ssegit == range.first ? range.second : range.first;
+                nextKey = oit->second.points[0];
+                segments.erase(oit);
+            }
+            
+            segments.erase(ssegit);
+            
+            range = segments.equal_range(nextKey);
         }
-        std::swap(tmp, tmp2);
+
+        // no more segments in poly, take arbitrary if exists
+        if (discard) {
+            res.pop_back();
+        }
     }
+    
     return res;
 }
 

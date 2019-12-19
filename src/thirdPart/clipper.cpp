@@ -1493,20 +1493,24 @@ void Clipper::ZFillFunction(ZFillCallback zFillFunc)
 //------------------------------------------------------------------------------
 #endif
 
-bool Clipper::Execute(ClipType clipType, Paths &solution, PolyFillType fillType)
+Paths Clipper::Execute(ClipType clipType, PolyFillType fillType)
 {
-    return Execute(clipType, solution, fillType, fillType);
+    Paths solution;
+    Execute(clipType, solution, fillType, fillType);
+    return solution;
 }
 //------------------------------------------------------------------------------
 
-bool Clipper::Execute(ClipType clipType, PolyTree &polytree, PolyFillType fillType)
+PolyTree Clipper::ExecuteAsTree(ClipType clipType, PolyFillType fillType)
 {
-    return Execute(clipType, polytree, fillType, fillType);
+    PolyTree polytree;
+    Execute(clipType, polytree, fillType, fillType);
+    return  polytree;
 }
 //------------------------------------------------------------------------------
 
 bool Clipper::Execute(ClipType clipType, Paths &solution,
-    PolyFillType subjFillType, PolyFillType clipFillType)
+    PolyFillType subjFillType, PolyFillType clipFillType, size_t skipFirstInResult )
 {
   if( m_ExecuteLocked ) return false;
   if (m_HasOpenPaths)
@@ -1518,7 +1522,7 @@ bool Clipper::Execute(ClipType clipType, Paths &solution,
   m_ClipType = clipType;
   m_UsingPolyTree = false;
   bool succeeded = ExecuteInternal();
-  if (succeeded) BuildResult(solution);
+  if (succeeded) BuildResult(solution, skipFirstInResult);
   DisposeAllOutRecs();
   m_ExecuteLocked = false;
   return succeeded;
@@ -3196,23 +3200,25 @@ int PointCount(OutPt *Pts)
 }
 //------------------------------------------------------------------------------
 
-void Clipper::BuildResult(Paths &polys)
+void Clipper::BuildResult(Paths &polys, size_t skipFirst)
 {
-  polys.reserve(m_PolyOuts.size());
-  for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
+  polys.reserve(polys.size() + m_PolyOuts.size() - skipFirst);
+  for (PolyOutList::size_type i = skipFirst; i < m_PolyOuts.size(); ++i)
   {
     if (!m_PolyOuts[i]->Pts) continue;
-    Path pg;
+//    Path pg;
     OutPt* p = m_PolyOuts[i]->Pts->Prev;
     int cnt = PointCount(p);
     if (cnt < 2) continue;
+    polys.emplace_back();
+    Path &pg = polys.back();
     pg.reserve(cnt);
     for (int i = 0; i < cnt; ++i)
     {
       pg.push_back(p->Pt);
       p = p->Prev;
     }
-    polys.push_back(pg);
+//    polys.push_back(pg);
   }
 }
 //------------------------------------------------------------------------------
@@ -3883,10 +3889,9 @@ void ClipperOffset::FixOrientations()
   }
 }
 //------------------------------------------------------------------------------
-
-Paths ClipperOffset::ExecuteAsPaths(double delta)
+void  ClipperOffset::ExecuteAddTo(Paths& paths,double delta)
 {
-  Paths solution;
+  Paths& solution = paths;
   FixOrientations();
   DoOffset(delta);
   
@@ -3908,9 +3913,16 @@ Paths ClipperOffset::ExecuteAsPaths(double delta)
 
     clpr.AddPath(outer, ptSubject, true);
     clpr.ReverseSolution(true);
-    clpr.Execute(ctUnion, solution, pftNegative, pftNegative);
-    if (solution.size() > 0) solution.erase(solution.begin());
+    clpr.Execute(ctUnion, solution, pftNegative, pftNegative, 1);
+//    if (solution.size() > 0) solution.erase(solution.begin());
   }
+    
+}
+
+Paths ClipperOffset::ExecuteAsPaths(double delta)
+{
+  Paths solution;
+  ExecuteAddTo(solution, delta);
   return solution;
 }
 //------------------------------------------------------------------------------

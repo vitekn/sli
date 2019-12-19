@@ -264,15 +264,14 @@ class Clipper : public virtual ClipperBase
 {
 public:
   Clipper(int initOptions = 0);
-  bool Execute(ClipType clipType,
-      Paths &solution,
+  Paths Execute(ClipType clipType,
       PolyFillType fillType = pftEvenOdd);
   bool Execute(ClipType clipType,
       Paths &solution,
       PolyFillType subjFillType,
-      PolyFillType clipFillType);
-  bool Execute(ClipType clipType,
-      PolyTree &polytree,
+      PolyFillType clipFillType,
+      size_t skipFirstInResult = 0);
+  PolyTree ExecuteAsTree(ClipType clipType,
       PolyFillType fillType = pftEvenOdd);
   bool Execute(ClipType clipType,
       PolyTree &polytree,
@@ -331,7 +330,7 @@ private:
   void BuildIntersectList(const cInt topY);
   void ProcessIntersectList();
   void ProcessEdgesAtTopOfScanbeam(const cInt topY);
-  void BuildResult(Paths& polys);
+  void BuildResult(Paths& polys, size_t skipFirst = 0);
   void BuildResult2(PolyTree& polytree);
   void SetHoleState(TEdge *e, OutRec *outrec);
   void DisposeIntersectNodes();
@@ -365,6 +364,7 @@ public:
   void AddPath(const Path& path, JoinType joinType, EndType endType);
   void AddPaths(const Paths& paths, JoinType joinType, EndType endType);
   Paths ExecuteAsPaths(double delta);
+  void  ExecuteAddTo(Paths& paths,double delta);
   PolyTree ExecuteAsTree(double delta);
   void Clear();
   double MiterLimit;

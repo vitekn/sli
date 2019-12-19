@@ -140,6 +140,7 @@ double SegmentUtil::getK(const Segment& s)
 
 std::tuple<bool, Point2> SegmentUtil::haveIntersection(const Segment& s1, const Segment& s2)
 {
+    
     int64_t s1_x = s1.points[1].x - s1.points[0].x;
     int64_t s1_y = s1.points[1].y - s1.points[0].y;
     int64_t s2_x = s2.points[1].x - s2.points[0].x;
@@ -160,7 +161,7 @@ std::tuple<bool, Point2> SegmentUtil::haveIntersection(const Segment& s1, const 
 
     
     if (t >= 0 && t <= 1) {
-        std::tuple<bool, Point2>(true,{(int64_t)(s1.points[0].x + (t * s1_x)), (int64_t)(s1.points[0].y + (t * s1_y))});
+        return std::tuple<bool, Point2>(true,{(int64_t)(s1.points[0].x + (t * s1_x)), (int64_t)(s1.points[0].y + (t * s1_y))});
     }
 
     return std::tuple<bool, Point2>(false,{});
@@ -173,9 +174,8 @@ int64_t SegmentUtil::getYOnLine(int64_t x, const Segment& seg)
     int64_t dy = seg.points[0].y - seg.points[1].y;
     int64_t dsx = seg.points[0].x - x;
     volatile int64_t m = dsx*dy;
+
     return seg.points[0].y - m/dx;
-    
-    
     
 }
 
@@ -188,9 +188,9 @@ int SegmentUtil::getPointPosition(const Point2& subj, const Segment& section)
             return PointPosition::ONLINE;
         }
         if (nxd * section.sign < 0) {
-            return PointPosition::INSIDE;
+            return PointPosition::OUTSIDE;
         } 
-        return PointPosition::OUTSIDE;
+        return PointPosition::INSIDE;
     }
     
     int64_t nyd = subj.y - getYOnLine(subj.x, section);
@@ -227,7 +227,7 @@ void SegmentUtil::midOffset(Segment& seg1, Segment& seg2, int64_t offset)
     
     md = Point2Util::normalize(md);
     //Point2 md2{-seg1.normale.y, seg1.normale.x};
-    const Point2& md2 = seg1.normale;
+    const Point2& md2 = { -seg1.normale.x, -seg1.normale.y} ;
     int64_t cp = md.x * md2.x + md.y * md2.y; // /1 000 000
     
     md *= (offset * 1000);
@@ -236,6 +236,64 @@ void SegmentUtil::midOffset(Segment& seg1, Segment& seg2, int64_t offset)
     assert (seg1.points[1] == seg2.points[0]);
     seg1.points[1] += md;
     seg2.points[0] = seg1.points[1];
-
-    
 }
+
+double SegmentUtil::areaV(const Point2& p1, const Point2& p2)
+{
+    return std::sqrt(p1.x*p1.x + p1.y*p1.y) * std::sqrt(p2.x*p2.x + p2.y*p2.y);
+}
+
+
+double SegmentUtil::sinA(const Point2& p1, const Point2& p2, double areaV)
+{
+    
+    return (double(p1.x * p2.y - p1.y * p2.x)) / areaV; // 1..-1 = 2..0
+}
+
+
+double SegmentUtil::cosA(const Point2& p1, const Point2& p2, double areaV)
+{
+    return (double(p1.x * p2.x + p1.y * p2.y)) / areaV; // 1..-1 = 2..0
+}
+
+int64_t SegmentUtil::getAngle(const Point2& p1, const Point2& p2)
+{
+    double a = areaV(p1, p2);
+    double c = cosA(p1 ,p2, a);
+    double s = sinA(p1 ,p2, a);
+    c += 1;
+    if (s < 0) {
+        c = -c;
+    }
+    return (int64_t(c * std::numeric_limits<int64_t>::max()/2));
+}
+
+int64_t SegmentUtil::getAngle(const Segment& s1, const Segment& s2)
+{
+    assert (s1.points[1] == s2.points[0]);
+
+    Point2 p1 = s1.points[0] - s1.points[1];
+    Point2 p2 = s2.points[1] - s2.points[0];
+
+    double cA = cosA(p1, p2, areaV(p1, p2)) + 1;
+
+    if(getPointPosition(s2.points[1], s1) == PointPosition::OUTSIDE) {
+        cA = -cA;
+    }
+    return (int64_t(cA * std::numeric_limits<int64_t>::max()/2));
+}
+
+bool SegmentUtil::validCorner(const Segment& s1, const Segment& s2, int64_t angle)
+{
+    int64_t ccwAngle = getAngle(s1.points[0] - s1.points[1],
+                                s2.points[0] - s2.points[1]);
+    
+    int64_t normAngle = getAngle(s1.normale, s2.normale);
+    
+    int rs = ~(ccwAngle ^ angle);
+    
+    return (((((normAngle ^ angle)) ^ rs) & 0x8000'0000'0000'0000) == 0);
+
+}
+
+

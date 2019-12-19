@@ -92,10 +92,15 @@ struct TestSegs {
     constexpr static const Segment p45max   {{{Lim::COORD_MIN, Lim::COORD_MIN}, {Lim::COORD_MAX, Lim::COORD_MAX}}, { 707, -707},   -1,  1};
     constexpr static const Segment n45max   {{{Lim::COORD_MIN, Lim::COORD_MIN}, {Lim::COORD_MAX, Lim::COORD_MAX}}, {-707,  707},   -1, -1};
 
-    constexpr static const Segment y0u      {{{         -1000,              0}, {          1000,              0}}, {   0, 1000},  infp,  1};
-    constexpr static const Segment x0u      {{{             0,          -1000}, {             0,           1000}}, {1000,    0},     0,  1};
-    constexpr static const Segment y0max    {{{Lim::COORD_MIN,              0}, {Lim::COORD_MAX,              0}}, {   0, 1000},  infp,  1};
-    constexpr static const Segment x0max    {{{             0, Lim::COORD_MIN}, {             0, Lim::COORD_MAX}}, {1000,    0},     0,  1};
+    constexpr static const Segment py0uH     {{{         -1000,              0}, {          1000,              0}}, {   0, 1000}, infp,  1};
+    constexpr static const Segment py0maxH   {{{Lim::COORD_MIN,              0}, {Lim::COORD_MAX,              0}}, {   0, 1000}, infp,  1};
+    constexpr static const Segment ny0uH     {{{         -1000,              0}, {          1000,              0}}, {   0,-1000}, infm,  1};
+    constexpr static const Segment ny0maxH   {{{Lim::COORD_MIN,              0}, {Lim::COORD_MAX,              0}}, {   0,-1000}, infm,  1};
+
+    constexpr static const Segment px0uV     {{{             0,          -1000}, {             0,           1000}}, {1000,    0},    0,  1};
+    constexpr static const Segment px0maxV   {{{             0, Lim::COORD_MIN}, {             0, Lim::COORD_MAX}}, {1000,    0},    0,  1};
+    constexpr static const Segment nx0uV     {{{             0,          -1000}, {             0,           1000}}, {-1000,   0},    0, -1};
+    constexpr static const Segment nx0maxV   {{{             0, Lim::COORD_MIN}, {             0, Lim::COORD_MAX}}, {-1000,   0},    0, -1};
     
     constexpr static const Segment p30u     {{{          -866,           -500}, {           866,            500}}, { 500, -866}, -1.73205080757,  1};
     constexpr static const Segment n30u     {{{          -866,           -500}, {           866,            500}}, {-500,  866}, -1.73205080757, -1};
@@ -165,6 +170,24 @@ INSTANTIATE_TEST_SUITE_P(getPointPosition,
                                                     SegmentUtil::PointPosition::ONLINE},
                              GetPointPositionParam {Point2{ Lim::COORD_MAX, Lim::COORD_MAX},
                                                     TestSegs::n45max,
+                                                    SegmentUtil::PointPosition::ONLINE},
+                             GetPointPositionParam {Point2{-1000, 1000},
+                                                    TestSegs::px0uV,
+                                                    SegmentUtil::PointPosition::INSIDE},
+                             GetPointPositionParam {Point2{ 1000, 1000},
+                                                    TestSegs::px0uV,
+                                                    SegmentUtil::PointPosition::OUTSIDE},
+                             GetPointPositionParam {Point2{-1000, 1000},
+                                                    TestSegs::nx0uV,
+                                                    SegmentUtil::PointPosition::OUTSIDE},            
+                             GetPointPositionParam {Point2{ 1000, 1000},
+                                                    TestSegs::nx0uV,
+                                                    SegmentUtil::PointPosition::INSIDE},
+                             GetPointPositionParam {Point2{ 0, 1000},
+                                                    TestSegs::px0uV,
+                                                    SegmentUtil::PointPosition::ONLINE},
+                             GetPointPositionParam {Point2{ 0, 1000},
+                                                    TestSegs::nx0uV,
                                                     SegmentUtil::PointPosition::ONLINE}
                                                                                        ));
 
@@ -204,7 +227,6 @@ TEST_P(MidOffsetTest, midOffsetTest)
     const MidOffsetParam& p = GetParam();
     Segment s1 = p.s1;
     Segment s2 = p.s2;
-    std::cout << "S1 = " << s1 << " S2 = " << s2 << std::endl;
     SegmentUtil::midOffset(s1, s2, p.offset);
     
     EXPECT_EQ(p.p_exp, s1.points[1]);
@@ -218,17 +240,166 @@ constexpr Segment operator*(const Segment& s, int64_t m)
 
 INSTANTIATE_TEST_SUITE_P(midOffset,
                          MidOffsetTest,
-                         testing::Values(MidOffsetParam{ TestSegs::p45u * 2,
-                                                         move(reverse(rotate90CCW(TestSegs::n45u))*2,{4000, 0}),/*  2,*/
+                         testing::Values(MidOffsetParam{ TestSegs::n45u * 2,
+                                                         move(reverse(rotate90CCW(TestSegs::p45u))*2,{4000, 0}),
                                                          707,
-                                                         Point2{2000,1000}},
-                                         MidOffsetParam{ move(reverse(rotate90CCW(TestSegs::n45u))*2,{-4000, 0}),/*  2,*/
+                                                         Point2{2000, 1000}},   /* o /\ o */ // 45, 60-30, 30-60
+                                         MidOffsetParam{ move(reverse(rotate90CCW(TestSegs::n45u))*2,{-4000, 0}),
                                                          TestSegs::p45u * 2,
                                                          707,
-                                                         Point2{-2000,-3000}}
-                                        
+                                                         Point2{-2000, -1000}}, /* o \/ o */ // 45, 60-30, 30-60
+                                         MidOffsetParam{ TestSegs::p45u * 2,
+                                                         move(reverse(rotate90CCW(TestSegs::n45u))*2,{4000, 0}),
+                                                         707,
+                                                         Point2{2000, 3000}},  /* i /\ i */ // 45, 60-30, 30-60
+                                         MidOffsetParam{ move(reverse(rotate90CCW(TestSegs::p45u))*2,{-4000, 0}),
+                                                         TestSegs::n45u * 2,
+                                                         707,
+                                                         Point2{-2000, -3000}}, /* i \/ i */ // 45, 60-30, 30-60
+                                         MidOffsetParam{ TestSegs::p45u * 2,
+                                                         move(rotate90CCW(TestSegs::p45u)*2,{0, 4000}),
+                                                         707,
+                                                         Point2{1000, 2000}},  /* i > o */ // 45, 30-60, 60-30
+                                         MidOffsetParam{ TestSegs::n45u * 2,
+                                                         move(rotate90CCW(TestSegs::n45u)*2,{0, 4000}),
+                                                         707,
+                                                         Point2{3000, 2000}},   /* o > i */ // 45, 30-60, 60-30
+                                         MidOffsetParam{ reverse(TestSegs::p45u * 2),
+                                                         move(reverse(rotate90CCW(TestSegs::p45u))*2,{0, -4000}),
+                                                         707,
+                                                         Point2{-3000, -2000}}, /* i < o */ // 45, 30-60, 60-30
+                                         MidOffsetParam{ reverse(TestSegs::n45u * 2),
+                                                         move(reverse(rotate90CCW(TestSegs::n45u))*2,{0, -4000}),
+                                                         707,
+                                                         Point2{-1000, -2000}},  /* o < i */ // 45, 30-60, 60-30
+                                         MidOffsetParam{ reverse(move(TestSegs::nx0uV,{0, 2000})),
+                                                         move(TestSegs::ny0uH,{1000, 1000}),
+                                                         1000,
+                                                         Point2 {1000, 2000}},   /* o L i */
+                                         MidOffsetParam{ reverse(move(TestSegs::px0uV, {-1000, 0})),
+                                                         move(TestSegs::py0uH, {0, -1000}),
+                                                         1000,
+                                                         Point2 {-2000, -2000}},    /* i L o */
+                                         MidOffsetParam{ move(TestSegs::py0uH, { 1000, -1000}),
+                                                         move(TestSegs::nx0uV, { 2000,  0}),
+                                                         1000,
+                                                         Point2 {3000, -2000}},     /* o _| i */
+                                         MidOffsetParam{ move(TestSegs::ny0uH, { 1000, 1000}),
+                                                         move(TestSegs::px0uV, { 2000, 2000}),
+                                                         1000,
+                                                         Point2 {1000, 2000}},     /* i _| o */
+                                         MidOffsetParam{ move(TestSegs::nx0uV, { 1000, 1000}),
+                                                         move(TestSegs::py0uH, { 2000, 2000}),
+                                                         1000,
+                                                         Point2 {2000, 1000}},      /* o |- i */
+                                         MidOffsetParam{ move(TestSegs::px0uV, { 2000, 1000}),
+                                                         move(TestSegs::ny0uH, { 3000, 2000}),
+                                                         1000,
+                                                         Point2 {1000, 3000}},       /* i |- o */
+                                         MidOffsetParam{ move(TestSegs::py0uH, { 1000, 2000}),
+                                                         reverse(move(TestSegs::px0uV, { 2000, 1000})),
+                                                         1000,
+                                                         Point2 {1000, 1000}},       /* i -| o */
+                                         MidOffsetParam{ move(TestSegs::ny0uH, { 1000, 2000}),
+                                                         reverse(move(TestSegs::nx0uV, { 2000, 1000})),
+                                                         1000,
+                                                         Point2 {3000, 3000}}       /* o -| i */
                              
                         ));
+
+
+struct HaveIntersectParam
+{
+    Segment s1;
+    Segment s2;
+    Point2  p_exp;
+    bool    result;
+};
+
+std::ostream& operator<<(std::ostream& os, const HaveIntersectParam& p)
+{
+    os << "s1 = " << p.s1 << " s2 = " << p.s2 << " exp p = " << p.p_exp << " exp res = " << p.result;
+    return os;
+}
+
+
+class HaveIntersectionTest : public testing::TestWithParam<HaveIntersectParam>
+{
+    
+};
+
+TEST_P(HaveIntersectionTest, haveIntersectionTest)
+{
+    const HaveIntersectParam& p = GetParam();
+    
+    bool result;
+    Point2 pt;
+  //  std::cout << p << std::endl;
+    std::tie(result, pt) = SegmentUtil::haveIntersection(p.s1, p.s2);
+    EXPECT_EQ(p.result, result);
+    
+    if (result) {
+        EXPECT_EQ (p.p_exp, pt);
+    }
+}
+
+
+INSTANTIATE_TEST_SUITE_P(haveIntersection,
+                         HaveIntersectionTest,
+                         testing::Values(HaveIntersectParam{TestSegs::p45u, rotate90CCW(TestSegs::p45u), {0, 0}, true},
+                                         HaveIntersectParam{move(TestSegs::p45u,{1000, 1000}), move(rotate90CCW(TestSegs::p45u),{1000,1000}), {1000, 1000}, true},
+                                         HaveIntersectParam{move(TestSegs::p60u,{1000, 1000}), move(rotate90CCW(TestSegs::p30u),{1000,1000}), {1000, 1000}, true},
+                                         HaveIntersectParam{move(TestSegs::p45u,{1000, 1000}), move(rotate90CCW(TestSegs::p45u),{4000,4000}), {1000, 1000}, false},
+                                         HaveIntersectParam{move(TestSegs::px0uV,{1000, 1000}), move(TestSegs::py0uH, {1000,1000}), {1000, 1000}, true},
+                                         HaveIntersectParam{TestSegs::p45u, TestSegs::p45u, {1000, 1000}, false},
+                                         HaveIntersectParam{TestSegs::p45u, move(rotate90CCW(TestSegs::p45u),{2000, 0}), {1000, 1000}, true},
+                                         HaveIntersectParam{TestSegs::p45u, move(rotate90CCW(TestSegs::p45u),{1000, 1000}), {1000, 1000}, true}
+                             
+                        ));
+
+
+struct GetAngleParam
+{
+    Segment s1;
+    Segment s2;
+    int64_t angle;
+};
+
+std::ostream& operator<<(std::ostream& os, const GetAngleParam& p)
+{
+    os << "s1 = " << p.s1 << " s2 = " << p.s2 << " exp a = " << p.angle;
+    return os;
+}
+
+
+class GetAngleTest : public testing::TestWithParam<GetAngleParam>
+{
+    
+};
+
+TEST_P(GetAngleTest, getAngleTest)
+{
+    const GetAngleParam& p = GetParam();
+//    std::cout << p << std::endl;
+    int64_t a = SegmentUtil::getAngle(p.s1, p.s2);
+  
+    EXPECT_EQ(p.angle, a);
+}
+
+INSTANTIATE_TEST_SUITE_P(getAngle,
+                         GetAngleTest,
+                         testing::Values(GetAngleParam{TestSegs::p45u, reverse(move(rotate90CCW(TestSegs::p45u), {2000, 0})), std::numeric_limits<int64_t>::min()/2},
+                                         GetAngleParam{TestSegs::n45u, reverse(move(rotate90CCW(TestSegs::p45u), {2000, 0})), std::numeric_limits<int64_t>::max()/2 + 1},
+                                         GetAngleParam{TestSegs::p45u, move(TestSegs::p30u, {1866, 1500}), -157124229638861824},
+                                         GetAngleParam{TestSegs::p45u, move(TestSegs::p60u, {1500, 1866}),  157124229638861824},
+                                         GetAngleParam{TestSegs::n45u, move(TestSegs::p30u, {1866, 1500}),  157124229638861824},
+                                         GetAngleParam{TestSegs::n45u, move(TestSegs::p60u, {1500, 1866}), -157124229638861824},
+                                         GetAngleParam{move(TestSegs::px0uV, {1000,0}), move(TestSegs::p60u, {1500, 1866}), -617878061727699968},
+                                         GetAngleParam{move(TestSegs::nx0uV, {1000,0}), move(TestSegs::p60u, {1500, 1866}),  617878061727699968},
+                                         GetAngleParam{move(TestSegs::px0uV, {1000,0}), move(TestSegs::py0uH,{2000, 1000}),  std::numeric_limits<int64_t>::min()/2},
+                                         GetAngleParam{move(TestSegs::nx0uV, {1000,0}), move(TestSegs::py0uH,{2000, 1000}),  std::numeric_limits<int64_t>::max()/2 + 1}
+
+                                  ));
 
 
 } // namespace
