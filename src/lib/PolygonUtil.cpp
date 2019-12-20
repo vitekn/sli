@@ -19,6 +19,7 @@ Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
     SegmentUtil::midOffset(tmp.back(), tmp.front(), offset);
 
     Polygons res;
+    Polygons disc;
 
     std::unordered_multimap<Point2, Segment> segments;
     
@@ -44,7 +45,7 @@ Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
         Point2 curr = mit->first;
         Point2 nextKey = mit->second.points[0];
         auto range = segments.equal_range(nextKey);
-        res.emplace_back();
+        Polygon tmpres;
         bool discard = false;
         
         while (range.first != range.second) {
@@ -56,7 +57,7 @@ Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
                     break;
                 }
             }
-            res.back().emplace_back(ssegit->second);
+            tmpres.emplace_back(ssegit->second);
             curr = nextKey;
             
             
@@ -86,12 +87,12 @@ Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
                 
                 //try maxA -> if internal region - take it
                 
-                if (SegmentUtil::validCorner(ssegit->second, maxAit->second, maxA)) {
+                if (SegmentUtil::validCorner(ssegit->second, SegmentUtil::reverse(maxAit->second), maxA)) {
                     //match
                         nextKey = maxAit->second.points[0];
                         segments.erase(maxAit);
                 } else {
-                    if (SegmentUtil::validCorner(ssegit->second, minAit->second, minA)) {
+                    if (SegmentUtil::validCorner(ssegit->second, SegmentUtil::reverse(minAit->second), minA)) {
                         // match - discard
                         discard = true;
                         nextKey = minAit->second.points[0];
@@ -118,12 +119,31 @@ Polygons PolygonUtil::offset(const Polygon& p, int64_t offset)
 
         // no more segments in poly, take arbitrary if exists
         if (discard) {
-            res.pop_back();
+            disc.emplace_back(std::move(tmpres));
+        } else {
+            res.emplace_back(std::move(tmpres));
+        }
+        tmpres.clear();
+    }
+    
+    for (auto& dp : disc) {
+        for (auto rit = res.begin(); rit != res.end(); ++rit) {
+            //reverse  condition, discarded polygons have reversed normales
+            if (!contains(dp, rit->front().points[0])) {
+                rit = res.erase(rit);
+            }
         }
     }
     
     return res;
 }
+
+bool PolygonUtil::contains(const Polygon& poly, const Point2& p)
+{
+    ///??? ray?
+    return true;
+}
+
 
 
 PolygonUtil::Intersector::Intersector(Polygon* p)

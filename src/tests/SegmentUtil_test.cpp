@@ -401,5 +401,49 @@ INSTANTIATE_TEST_SUITE_P(getAngle,
 
                                   ));
 
+struct ValidCornerParam
+{
+    Segment s1;
+    Segment s2;
+    bool    result;
+};
+
+std::ostream& operator<<(std::ostream& os, const ValidCornerParam& p)
+{
+    os << "s1 = " << p.s1 << " s2 = " << p.s2 << " exp res = " << p.result;
+    return os;
+}
+
+
+class ValidCornerTest : public testing::TestWithParam<ValidCornerParam>
+{
+    
+};
+
+TEST_P(ValidCornerTest, validCornerTest)
+{
+    const ValidCornerParam& p = GetParam();
+//    std::cout << p << std::endl;
+    int64_t a = SegmentUtil::getAngle(p.s1, p.s2);
+    bool result = SegmentUtil::validCorner(p.s1, p.s2, a);
+  
+    EXPECT_EQ(p.result, result);
+}
+
+INSTANTIATE_TEST_SUITE_P(validCorner,
+                         ValidCornerTest,
+                         testing::Values(ValidCornerParam{ TestSegs::n45u * 2, move(reverse(rotate90CCW(TestSegs::p45u))*2,{4000, 0}), true },
+                                         ValidCornerParam{ TestSegs::p45u * 2, move(reverse(rotate90CCW(TestSegs::n45u))*2,{4000, 0}), true },
+                                         ValidCornerParam{ TestSegs::p45u * 2, move(reverse(rotate90CCW(TestSegs::p45u))*2,{4000, 0}), false },
+                                         ValidCornerParam{ TestSegs::p45u * 2, move(rotate90CCW(TestSegs::p45u)*2,{0, 4000}), true },
+                                         ValidCornerParam{ TestSegs::n45u * 2, move(rotate90CCW(TestSegs::n45u)*2,{0, 4000}), true },
+                                         ValidCornerParam{ TestSegs::p45u * 2, move(rotate90CCW(TestSegs::n45u)*2,{0, 4000}), false },
+                                         ValidCornerParam{ TestSegs::n45u * 2, move(rotate90CCW(TestSegs::p45u)*2,{0, 4000}), false },
+                                         ValidCornerParam{ reverse(move(TestSegs::nx0uV,{0, 2000})), move(TestSegs::ny0uH,{1000, 1000}), true },
+                                         ValidCornerParam{ reverse(move(TestSegs::px0uV,{0, 2000})), move(TestSegs::py0uH,{1000, 1000}), true },
+                                         ValidCornerParam{ reverse(move(TestSegs::nx0uV,{0, 2000})), move(TestSegs::py0uH,{1000, 1000}), false },
+                                         ValidCornerParam{ reverse(move(TestSegs::px0uV,{0, 2000})), move(TestSegs::ny0uH,{1000, 1000}), false }
+                                  ));
+
 
 } // namespace

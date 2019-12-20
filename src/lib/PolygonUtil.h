@@ -8,6 +8,8 @@ struct PolygonUtil {
     
     static Polygons offset(const Polygon& p, int64_t offset);
 
+    static bool contains (const Polygon& poly, const Point2& p);
+    
     struct Intersection {
         Segment s;
         Point2  ip;

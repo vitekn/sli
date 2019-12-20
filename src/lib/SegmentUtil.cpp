@@ -253,7 +253,10 @@ double SegmentUtil::sinA(const Point2& p1, const Point2& p2, double areaV)
 
 double SegmentUtil::cosA(const Point2& p1, const Point2& p2, double areaV)
 {
-    return (double(p1.x * p2.x + p1.y * p2.y)) / areaV; // 1..-1 = 2..0
+    
+    int64_t p = (p1.x * p2.x + p1.y * p2.y);
+    double res = ((double)(p)) / areaV;
+    return res; // 1..-1 = 2..0
 }
 
 int64_t SegmentUtil::getAngle(const Point2& p1, const Point2& p2)
@@ -285,15 +288,15 @@ int64_t SegmentUtil::getAngle(const Segment& s1, const Segment& s2)
 
 bool SegmentUtil::validCorner(const Segment& s1, const Segment& s2, int64_t angle)
 {
+    assert (s1.points[1] == s2.points[0]);
     int64_t ccwAngle = getAngle(s1.points[0] - s1.points[1],
-                                s2.points[0] - s2.points[1]);
+                                s2.points[1] - s2.points[0]);
     
     int64_t normAngle = getAngle(s1.normale, s2.normale);
     
-    int rs = ~(ccwAngle ^ angle);
+    int64_t rs = ~(ccwAngle ^ angle);
     
     return (((((normAngle ^ angle)) ^ rs) & 0x8000'0000'0000'0000) == 0);
-
 }
 
 

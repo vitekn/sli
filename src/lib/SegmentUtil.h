@@ -41,6 +41,11 @@ struct SegmentUtil
     static double  areaV(const Point2& p1, const Point2& p2);
     static double  cosA (const Point2& p1, const Point2& p2, double areaV);
     static double  sinA (const Point2& p1, const Point2& p2, double areaV);
+    static constexpr Segment reverse(const Segment& s)
+    {
+        return {{s.points[1], s.points[0]}, s.normale, s.k, s.sign};
+    }
+
     
   //  double getK(const Segment& s);
 //    bool hasPoint(const Segment& s, const Point2& p);
